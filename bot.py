@@ -5,7 +5,6 @@ from PIL import Image, ImageGrab, ImageChops
 from os import path, mkdir, listdir
 from pynput.mouse import Button, Controller
 
-
 BASE_PATH = path.dirname(path.abspath(__file__))
 PIECES_PATH = path.join(BASE_PATH, 'pcs')
 if not path.isdir(PIECES_PATH):
@@ -45,6 +44,7 @@ def unblend(c1, c1blend, c2, c2blend, p=1, q=100, n=100, depth=0):
         b = extract_green(c2, c2blend, t)
         s = 0
         for j in range(3):
+            # maybe use mean squared error or some other bs
             s += abs(a[j] - b[j])
         m[i] = s
     idx = min(m, key=m.get)
@@ -58,16 +58,6 @@ color, blend_value = unblend(col1, col1sel, col2, col2sel)
 print(
     f'Original color: {color}, blend factor: {blend_value}, alpha: {int(blend_value * 256)}')
 quit()
-
-# green = col1sel >> 7 - col1 >> 7 - col1
-
-
-"""
-    (1-t)*a + t*b = nc;
-    t * b = (nc - (1-t) * a / 
-    b = col1sel / 127 - col1 / 127 - col1
-
-"""
 
 
 class Board:
@@ -93,7 +83,7 @@ class Board:
         self.winner = 0
 
 
-def screen():
+def screen(url):
     toplist, winlist = [], []
 
     def enum_cb(hwnd, results):
@@ -102,7 +92,7 @@ def screen():
     win32gui.EnumWindows(enum_cb, toplist)
 
     browser = [(hwnd, title)
-               for hwnd, title in winlist if 'lichess.org' in title.lower()]
+               for hwnd, title in winlist if url in title.lower()]
     browser = browser[0]
     hwnd = browser[0]
 
@@ -201,8 +191,7 @@ def parse_screen(img, start_image):
 
 
 start_img = Image.open(path.join(BASE_PATH, 'screenshot.PNG'))
-img = screen()
-# img.show()s
+img = screen('lichess.org')
 img.save('a.png')
 board = parse_screen(img, start_img)
 print(board.board)
